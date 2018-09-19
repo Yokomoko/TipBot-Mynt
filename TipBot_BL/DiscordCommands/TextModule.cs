@@ -43,27 +43,6 @@ namespace TipBot_BL.DiscordCommands {
             await ReplyAsync("", false, embed);
         }
 
-        [Command("setreleasedate")]
-        public async Task SetReleaseDate(string date, string time) {
-            if (DiscordClientNew._client != null) {
-                var id = DiscordClientNew._client.Guilds.FirstOrDefault(d => Context.Guild != null && d.Id == Context.Guild.Id)?.Users.FirstOrDefault(d => d.Id == Context.User.Id);
-
-                if (id != null) {
-                    if (!id.GuildPermissions.Administrator) {
-                        return;
-                    }
-                }
-            }
-
-            var datetime = $"{date} {time}";
-
-            DateTime oDate = Convert.ToDateTime(datetime);
-
-            Preferences.NextRelease = oDate;
-            await ReplyAsync("Release Date Set");
-        }
-
-
         [Command("pool")]
         public async Task GetPoolAddress() {
             await ReplyAsync("", false, GetPoolEmbed());
