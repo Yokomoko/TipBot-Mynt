@@ -1,0 +1,42 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="TipBot_BL.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DiscordToken" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="PriceCheckChannel" Type="System.UInt64" Scope="User">
+      <Value Profile="(Default)">458146332029353996</Value>
+    </Setting>
+    <Setting Name="TipBotChannel" Type="System.UInt64" Scope="User">
+      <Value Profile="(Default)">460734356919681024</Value>
+    </Setting>
+    <Setting Name="FantasyChannel" Type="System.UInt64" Scope="User">
+      <Value Profile="(Default)">486492693787312129</Value>
+    </Setting>
+    <Setting Name="GuildId" Type="System.UInt64" Scope="User">
+      <Value Profile="(Default)">456496645371199500</Value>
+    </Setting>
+    <Setting Name="QT_IP" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="QT_Username" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="QT_Password" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="BaseCurrency" Type="System.String" Scope="User">
+      <Value Profile="(Default)">MYNT</Value>
+    </Setting>
+    <Setting Name="ExplorerPrefix" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://69.164.213.228:3001/tx/</Value>
+    </Setting>
+    <Setting Name="ExplorerSuffix" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="Setting" Type="System.String" Scope="User">
+      <Value Profile="(Default)">109568</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
