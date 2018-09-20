@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -122,7 +123,7 @@ namespace TipBot_BL.DiscordCommands {
         }
 
         [Command("flipstats")]
-        public async Task FlipStats(){
+        public async Task FlipStats() {
             var statistics = FlipResults.GetStatistics();
             var embed = new EmbedBuilder();
             embed.WithTitle("Flip Statistics");
@@ -130,10 +131,10 @@ namespace TipBot_BL.DiscordCommands {
             embed.AddInlineField("Total Flips", statistics.TotalFlips);
             embed.AddInlineField("Wins", statistics.Wins);
             embed.AddInlineField("Losses", statistics.Losses);
-            
-            embed.AddInlineField("Total Flipped", $"{Math.Round((decimal) statistics.TotalFlipped, 2)} {Preferences.BaseCurrency}");
-            embed.AddInlineField("User Winnings", $"{Math.Round((decimal) statistics.PaidOut,2)} {Preferences.BaseCurrency}");
-            embed.AddInlineField("Bot Winnings", $"{Math.Round((decimal) statistics.PaidIn, 2)} {Preferences.BaseCurrency}");
+
+            embed.AddInlineField("Total Flipped", $"{Math.Round((decimal)statistics.TotalFlipped, 2)} {Preferences.BaseCurrency}");
+            embed.AddInlineField("User Winnings", $"{Math.Round((decimal)statistics.PaidOut, 2)} {Preferences.BaseCurrency}");
+            embed.AddInlineField("Bot Winnings", $"{Math.Round((decimal)statistics.PaidIn, 2)} {Preferences.BaseCurrency}");
 
             embed.AddInlineField("Win Percentage", Math.Round((decimal)statistics.WinPercentage, 2) * 100 + "%");
             embed.AddInlineField("Head Flips", statistics.HeadFlips);
@@ -359,7 +360,15 @@ namespace TipBot_BL.DiscordCommands {
         [Command("house")]
         public async Task GetHouseBalance() {
             if (CanRunTipCommands) {
-                await ReplyAsync($"The house balance is at {QTCommands.GetBalance(DiscordClientNew._client.CurrentUser.Id).Result} {Preferences.BaseCurrency}");
+                var balanceString = QTCommands.GetBalance(DiscordClientNew._client.CurrentUser.Id).Result;
+
+                if (decimal.TryParse(balanceString, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.CreateSpecificCulture("en-GB"), out var balance)) {
+                    balance = balance - FantasyPortfolioModule.PrizePool;
+                    await ReplyAsync($"The house balance is at {balance} {Preferences.BaseCurrency}");
+                }
+                else {
+                    await ReplyAsync("Error getting house balance");
+                }
             }
             else {
                 await ReplyAsync($"Please use the <#{Preferences.TipBotChannel}> channel");
