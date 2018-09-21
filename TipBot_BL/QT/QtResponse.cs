@@ -33,6 +33,23 @@ namespace TipBot_BL.QT {
             return false;
         }
 
+        public static bool CheckHouseBalance(ulong userId, decimal amount)
+        {
+            try
+            {
+                if (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) >= amount)
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+            return false;
+        }
+
+
         public static string SendTip(ulong fromuserId, ulong touserId, decimal amount) {
             if (decimal.Parse(GetBalance(fromuserId).Result) >= amount) {
                 var obj = GroestlJson.TipBotRequest("move", new List<string> { fromuserId.ToString(), touserId.ToString(), amount.ToString() });

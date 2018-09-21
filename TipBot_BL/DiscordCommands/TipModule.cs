@@ -559,7 +559,7 @@ namespace TipBot_BL.DiscordCommands {
                             }
 
                             var rewardValue = betAmount * (decimal)BetWin;
-                            if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue)) {
+                            if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue + FantasyPortfolioModule.PrizePool)) {
                                 QTCommands.SendTip(Context.User.Id, DiscordClientNew._client.CurrentUser.Id, betAmount);
                                 try {
 
