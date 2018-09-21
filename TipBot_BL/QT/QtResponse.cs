@@ -42,7 +42,13 @@ namespace TipBot_BL.QT {
         }
 
         public static QtResponse Withdraw(ulong userId, string address) {
-            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) - (decimal)0.00015000).ToString() });
+            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) - (decimal)0.00025000).ToString() });
+            var response = JsonConvert.DeserializeObject<QtResponse>(obj);
+            return response;
+        }
+
+        public static QtResponse Withdraw(ulong userId, string address, decimal amount) {
+            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (amount - (decimal)0.00025000).ToString() });
             var response = JsonConvert.DeserializeObject<QtResponse>(obj);
             return response;
         }
