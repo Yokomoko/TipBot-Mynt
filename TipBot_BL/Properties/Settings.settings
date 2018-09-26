@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="DiscordToken" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">NDc5NTY2MzUyODEwNzcwNDcy.DlbGnA.L86bC8uwRabPzqVifmEax4bFA3U</Value>
     </Setting>
     <Setting Name="PriceCheckChannel" Type="System.UInt64" Scope="User">
       <Value Profile="(Default)">458146332029353996</Value>
@@ -18,13 +18,13 @@
       <Value Profile="(Default)">456496645371199500</Value>
     </Setting>
     <Setting Name="QT_IP" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">http://127.0.0.1:6533</Value>
     </Setting>
     <Setting Name="QT_Username" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">yokomoko</Value>
     </Setting>
     <Setting Name="QT_Password" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">584256</Value>
     </Setting>
     <Setting Name="BaseCurrency" Type="System.String" Scope="User">
       <Value Profile="(Default)">MYNT</Value>

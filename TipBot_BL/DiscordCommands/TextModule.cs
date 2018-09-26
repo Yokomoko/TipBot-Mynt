@@ -63,12 +63,12 @@ namespace TipBot_BL.DiscordCommands {
             embed.WithTitle($"{Preferences.BaseCurrency} Social Media");
             embed.WithDescription("Please link/follow/share our social media channels!");
 
-            embed.AddInlineField("Twitter", "http://twitter.com/myntcurrency");
             embed.AddInlineField("Reddit", "http://reddit.com/r/myntcurrency");
             embed.AddInlineField("Telegram", "http://t.me/myntofficial");
+            embed.AddInlineField("Twitter", "http://twitter.com/myntcurrency");
             embed.AddInlineField("Discord", "https://discord.gg/5VRBc4q");
             embed.AddField("Bitcoin Talk", "https://bitcointalk.org/index.php?topic=4973629");
-
+            embed.WithFooter(Preferences.FooterText);
             await ReplyAsync("", false, embed);
         }
 

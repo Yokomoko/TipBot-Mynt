@@ -25,7 +25,7 @@ namespace TipBot_BL.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("NDc5NTY2MzUyODEwNzcwNDcy.DlbGnA.L86bC8uwRabPzqVifmEax4bFA3U")]
         public string DiscordToken {
             get {
                 return ((string)(this["DiscordToken"]));
@@ -85,7 +85,7 @@ namespace TipBot_BL.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://127.0.0.1:6533")]
         public string QT_IP {
             get {
                 return ((string)(this["QT_IP"]));
@@ -97,7 +97,7 @@ namespace TipBot_BL.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("yokomoko")]
         public string QT_Username {
             get {
                 return ((string)(this["QT_Username"]));
@@ -109,7 +109,7 @@ namespace TipBot_BL.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("584256")]
         public string QT_Password {
             get {
                 return ((string)(this["QT_Password"]));
