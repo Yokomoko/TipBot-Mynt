@@ -37,8 +37,10 @@ namespace TipBot_BL.DiscordCommands {
             tipSb.AppendLine(Environment.NewLine);
             tipSb.AppendLine($"**-mining** OR **-pool**: Gives you details on how to mine {Preferences.BaseCurrency}");
             tipSb.AppendLine("**-devfunds**: Shows you the value of the current development funds");
+            tipSb.AppendLine("**-pool**: Show mining pool information");
+            tipSb.AppendLine("**-social**: Show all social media channels");
             embed.WithDescription(tipSb.ToString());
-            embed.WithFooter("Developed by Yokomoko (MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd)");
+            embed.WithFooter(Preferences.FooterText);
 
             await ReplyAsync("", false, embed);
         }
@@ -51,6 +53,23 @@ namespace TipBot_BL.DiscordCommands {
         [Command("mining")]
         public async Task GetMiningMsg() {
             await ReplyAsync("", false, GetPoolEmbed());
+        }
+
+        [Command("social")]
+        public async Task GetSocialLinks(){
+
+
+            var embed = new EmbedBuilder();
+            embed.WithTitle($"{Preferences.BaseCurrency} Social Media");
+            embed.WithDescription("Please link/follow/share our social media channels!");
+
+            embed.AddInlineField("Twitter", "http://twitter.com/myntcurrency");
+            embed.AddInlineField("Reddit", "http://reddit.com/r/myntcurrency");
+            embed.AddInlineField("Telegram", "http://t.me/myntofficial");
+            embed.AddInlineField("Discord", "https://discord.gg/5VRBc4q");
+            embed.AddField("Bitcoin Talk", "https://bitcointalk.org/index.php?topic=4973629");
+
+            await ReplyAsync("", false, embed);
         }
 
 
@@ -74,7 +93,7 @@ namespace TipBot_BL.DiscordCommands {
             embed.AddInlineField("Difficulty 2 (MED)", "stratum+tcp://pool.myntcurrency.org:3032");
             embed.AddInlineField("Difficulty 3 (LARGE)", "stratum+tcp://pool.myntcurrency.org:3256");
 
-            embed.WithFooter("Help support the developer funds, by mining to MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd");
+            embed.WithFooter(Preferences.FooterText);
 
             return embed;
         }

@@ -133,7 +133,7 @@ namespace TipBot_BL.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://69.164.213.228:3001/tx/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://chain.myntcurrency.org/tx/")]
         public string ExplorerPrefix {
             get {
                 return ((string)(this["ExplorerPrefix"]));
@@ -164,6 +164,19 @@ namespace TipBot_BL.Properties {
             }
             set {
                 this["Setting"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Help support the developer funds, by donating or mining to MVT2AJDK7CYTtWo5fX9u48" +
+            "eQT5ynWPyFFd")]
+        public string FooterText {
+            get {
+                return ((string)(this["FooterText"]));
+            }
+            set {
+                this["FooterText"] = value;
             }
         }
     }

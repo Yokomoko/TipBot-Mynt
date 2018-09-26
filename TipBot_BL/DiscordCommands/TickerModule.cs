@@ -79,7 +79,7 @@ namespace TipBot_BL.DiscordCommands {
 
                 emb.ThumbnailUrl = $"https://s2.coinmarketcap.com/static/img/coins/32x32/{tickerId}.png";
 
-                emb.WithFooter("MyntTip Price Checker | By Yokomoko");
+                emb.WithFooter(Preferences.FooterText);
                 return emb;
             }
             return null;

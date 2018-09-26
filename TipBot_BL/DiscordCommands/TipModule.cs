@@ -20,7 +20,7 @@ namespace TipBot_BL.DiscordCommands {
         private const decimal MinimumTipValue = (decimal)0.00000001;
         private const decimal MinBetAmount = (decimal)(0.01);
         public static decimal BetWin = (decimal)1.96;
-        public static decimal RpsWin = (decimal)2.94;
+
 
 
         // The random number provider.
@@ -43,7 +43,7 @@ namespace TipBot_BL.DiscordCommands {
                          (scale / (double)uint.MaxValue));
         }
 
-        private bool CanRunTipCommands => Context.Channel.Id == Preferences.TipBotChannel || Context.Channel.Id == Preferences.FantasyChannel;
+        private bool CanRunTipCommands => (Context.Channel.Id == Preferences.TipBotChannel || Context.Channel.Id == Preferences.FantasyChannel) || Context.Guild.GetUser(Context.User.Id).Roles.Any(d => d.Permissions.Administrator);
         public enum CoinSide {
             heads = 0,
             tails = 1
@@ -222,7 +222,7 @@ namespace TipBot_BL.DiscordCommands {
                 else {
                     var b = new EmbedBuilder();
                     b.WithDescription($"Your deposit address is: **{result}**");
-                    b.WithFooter($"{Context.Guild.CurrentUser.Nickname} - Developed by Yokomoko");
+                    b.WithFooter(Preferences.FooterText);
                     await ReplyAsync("", false, b);
 
                 }
@@ -465,87 +465,6 @@ namespace TipBot_BL.DiscordCommands {
             }
         }
 
-        /// <summary>
-        /// Unused, testing only
-        /// </summary>
-        /// <param name="side"></param>
-        /// <param name="amount"></param>
-        /// <returns></returns>
-        [Command("fliptest")]
-        public async Task FlipTest(string side, string amount) {
-            //     if (CanRunTipCommands) {
-            if (Enum.TryParse(side.ToLower(), out CoinSide coinSide)) {
-                if (decimal.TryParse(amount, out var betAmount)) {
-                    if (QTCommands.CheckBalance(Context.User.Id, betAmount)) {
-                        if (betAmount < 0) {
-                            await ReplyAsync($"Minimum bet {MinBetAmount} {Preferences.BaseCurrency}");
-                            return;
-                        }
-
-                        var rewardValue = betAmount * (decimal)BetWin;
-                        if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue)) {
-                            // QTCommands.SendTip(Context.User.Id, DiscordClientNew._client.CurrentUser.Id, betAmount);
-                            try {
-
-                                var coin = (CoinSide)RandomInteger(0, 2);
-                                //var coin = (CoinSide)Generator.Next(0, 2);
-
-                                var embed = new EmbedBuilder();
-
-                                string message;
-
-                                if (coin == coinSide) {
-                                    //      QTCommands.SendTip(DiscordClientNew._client.CurrentUser.Id, Context.User.Id, rewardValue);
-                                    embed.AddInlineField("Flipped", FirstCharToUpper(coin.ToString()));
-                                    embed.AddInlineField("Prize", $"{rewardValue} {Preferences.BaseCurrency}");
-                                    embed.AddInlineField("Profit", $"{(rewardValue - betAmount)} {Preferences.BaseCurrency}");
-                                    embed.WithColor(Discord.Color.Green);
-                                    message = $"You won! Congratulations {Context.User.Mention}!";
-                                }
-                                else {
-                                    embed.AddInlineField("Flipped", FirstCharToUpper(coin.ToString()));
-                                    embed.AddInlineField("Lost", $"{betAmount} {Preferences.BaseCurrency}");
-                                    embed.WithColor(Discord.Color.Red);
-                                    message = $"Unlucky {Context.User.Mention}, you lost :(";
-                                }
-                                embed.WithFooter("Developed by Yokomoko (MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd)");
-                                await ReplyAsync(message, false, embed);
-
-                                using (var context = new FantasyPortfolio_DBEntities()) {
-                                    var result = new FlipResults();
-                                    result.DateTime = DateTime.Now;
-                                    result.UserId = Context.User.Id.ToString();
-                                    result.FlipResult = (byte)coin;
-                                    result.UserFlip = (byte)coinSide;
-                                    result.FlipValue = betAmount;
-                                    context.FlipResults.Add(result);
-                                    context.SaveChanges();
-                                }
-
-                                Console.WriteLine($"{Context.User.Id} ({Context.User.Username}) bet on {side} and flipped {coin}");
-                            }
-                            catch (Exception e) {
-                                Console.WriteLine(e.Message);
-                                //     QTCommands.SendTip(DiscordClientNew._client.CurrentUser.Id, Context.User.Id, betAmount);
-                                await ReplyAsync("Sorry something went wrong. You have been refunded your bet.");
-                            }
-
-                        }
-                        else {
-                            await ReplyAsync("Sorry, the bot is too poor to reward you if you won :(");
-                        }
-                    }
-                    else {
-                        await ReplyAsync("You do not have enough balance to perform this action");
-                    }
-                }
-            }
-            //  }
-            //   else {
-            //       await ReplyAsync($"Please use the <#{Preferences.TipBotChannel}> channel");
-            //     }
-        }
-
 
         [Command("flip")]
         public async Task Flip(string side, string amount) {
@@ -558,9 +477,20 @@ namespace TipBot_BL.DiscordCommands {
                                 return;
                             }
 
-                            var rewardValue = betAmount * (decimal)BetWin;
-                            if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue + FantasyPortfolioModule.PrizePool)) {
-                                QTCommands.SendTip(Context.User.Id, DiscordClientNew._client.CurrentUser.Id, betAmount);
+                            decimal balance = 0;
+                            var houseBalanceCall = QTCommands.GetBalance(Context.Client.CurrentUser.Id).Result;
+                            decimal.TryParse(houseBalanceCall, out balance);
+
+                            decimal maxBet = balance / 10;
+
+                            if (betAmount > maxBet) {
+                                await ReplyAsync($"Maximum bet exceeded. Max: {maxBet} {Preferences.BaseCurrency}");
+                                return;
+                            }
+
+                           var rewardValue = betAmount * (decimal)BetWin;
+                            if (QTCommands.CheckBalance(Context.Client.CurrentUser.Id, rewardValue + FantasyPortfolioModule.PrizePool)) {
+                                QTCommands.SendTip(Context.User.Id, Context.Client.CurrentUser.Id, betAmount);
                                 try {
 
                                     var coin = (CoinSide)RandomInteger(0, 2);
@@ -584,7 +514,7 @@ namespace TipBot_BL.DiscordCommands {
                                         embed.WithColor(Discord.Color.Red);
                                         message = $"Unlucky {Context.User.Mention}, you lost :(";
                                     }
-                                    embed.WithFooter("Developed by Yokomoko (MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd)");
+                                    embed.WithFooter(Preferences.FooterText);
                                     await ReplyAsync(message, false, embed);
 
                                     using (var context = new FantasyPortfolio_DBEntities()) {
@@ -634,12 +564,23 @@ namespace TipBot_BL.DiscordCommands {
                                 return;
                             }
 
+                            decimal balance = 0;
+                            var houseBalanceCall = QTCommands.GetBalance(Context.Client.CurrentUser.Id).Result;
+                            decimal.TryParse(houseBalanceCall, out balance);
+
+                            decimal maxBet = balance / 10;
+
+                            if (betAmount > maxBet) {
+                                await ReplyAsync($"Maximum bet exceeded. Max: {maxBet} {Preferences.BaseCurrency}");
+                                return;
+                            }
+
                             var rewardValue = betAmount * (decimal)BetWin;
-                            if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue)) {
+                            if (QTCommands.CheckBalance(DiscordClientNew._client.CurrentUser.Id, rewardValue + FantasyPortfolioModule.PrizePool)) {
                                 QTCommands.SendTip(Context.User.Id, DiscordClientNew._client.CurrentUser.Id, betAmount);
                                 try {
 
-                                    var botDecision = (RockPaperScissors)RandomInteger(0, 4);
+                                    var botDecision = (RockPaperScissors)RandomInteger(0, 3);
 
                                     var embed = new EmbedBuilder();
 
@@ -716,7 +657,7 @@ namespace TipBot_BL.DiscordCommands {
                                             message = "Unlucky! You lose! Bot won";
                                             break;
                                     }
-                                    embed.WithFooter("Developed by Yokomoko (MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd)");
+                                    embed.WithFooter(Preferences.FooterText);
                                     await ReplyAsync(message, false, embed);
 
                                     Console.WriteLine($"{Context.User.Id} ({Context.User.Username}) opted for {userDecision} and bot opted for {botDecision}");

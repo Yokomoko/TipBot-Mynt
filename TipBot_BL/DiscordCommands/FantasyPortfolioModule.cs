@@ -79,7 +79,7 @@ namespace TipBot_BL.DiscordCommands {
             embed.AddField("-ticker <ticker>", "Gets the current rate for a ticker for the fantasy portfolio.");
             embed.AddField("-leaderboard", "Show the current leaderboard standings along with the current prize pool. This is shared once an hour anyway and also when the round expires.");
 
-            embed.WithFooter("Developed by Yokomoko (MVT2AJDK7CYTtWo5fX9u48eQT5ynWPyFFd)");
+            embed.WithFooter(Preferences.FooterText);
             embed.WithColor(Color.Blue);
 
             await ReplyAsync("", false, embed);

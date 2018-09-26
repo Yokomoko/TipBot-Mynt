@@ -38,6 +38,8 @@ namespace TipBot_BL {
         public static string ExplorerPrefix => Settings.Default.ExplorerPrefix;
         public static string ExplorerSuffix => Settings.Default.ExplorerSuffix;
 
+        public static string FooterText => Settings.Default.FooterText;
+
         #endregion
 
 
