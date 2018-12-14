@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,44 +14,60 @@ using TipBot_BL.Properties;
 using TipBot_BL.QT;
 using Timer = System.Timers.Timer;
 
-
-namespace TipBot_BL {
-    public class DiscordClientNew {
+namespace TipBot_BL
+{
+    public class DiscordClientNew
+    {
         public string ApiKey => Settings.Default.DiscordToken;
-        public ulong ChannelId;
 
         private const string CommandPrefix = "-";
         private const string TickerPrefix = "$";
         private Timer timer;
         private Timer fantasyTimer;
         private Timer fantasyTickerTimer;
-        
+        private Timer faucetSweepTimer;
+
         public static DiscordSocketClient _client;
         private CommandService _commands;
         private IServiceProvider _services;
 
-        public async void RunBotAsync() {
+        public async void RunBotAsync()
+        {
+            if (_client != null)
+            {
+                await _client.LogoutAsync();
+            }
+
             _client = new DiscordSocketClient();
             _commands = new CommandService();
             _services = new ServiceCollection().AddSingleton(_client).AddSingleton(_commands).BuildServiceProvider();
 
             _client.Log += LogAsync;
 
-            fantasyTickerTimer = new Timer {
+            fantasyTickerTimer = new Timer
+            {
                 Interval = 900000,
                 AutoReset = true,
                 Enabled = true
             };
 
+            faucetSweepTimer = new Timer
+            {
+                Interval = 8.64e+7, //24 hours
+                AutoReset = true,
+                Enabled = true
+            };
+
             PriceUpdateController cont = new PriceUpdateController();
-            Thread thread = new Thread(cont.Thread_ContinuousChecker) {
+            Thread thread = new Thread(cont.Thread_ContinuousChecker)
+            {
                 IsBackground = true,
                 Name = "Fantasy Price Updater"
             };
             thread.Start();
 
-
-            timer = new Timer {
+            timer = new Timer
+            {
                 Interval = 250,
                 AutoReset = false
             };
@@ -59,86 +76,95 @@ namespace TipBot_BL {
             await RegisterCommandsAsync();
 
             //event subscriptions
-
             await _client.LoginAsync(TokenType.Bot, ApiKey);
             await _client.StartAsync();
 
-            fantasyTimer = new Timer {
+            fantasyTimer = new Timer
+            {
                 Interval = 60000,
                 AutoReset = true,
                 Enabled = true
             };
-            Console.WriteLine("Timer Started");
+            ////DiscordClientNew.WriteToFile("Timer Started");
 
-            //rebrandVoteTimer = new Timer {
-            //    Interval = 11600000,
-            //    AutoReset = true,
-            //    Enabled = true
-            //};
-
-            //fantasyTimer.Elapsed += FantasyTimerOnElapsed;
-            try {
+            try
+            {
                 await _client.CurrentUser.ModifyAsync(x => x.Username = "MyntTip");
-                Console.WriteLine("Name Changed");
+                //     //DiscordClientNew.WriteToFile("Name Changed");
             }
-            catch{
+            catch
+            { /* Do Nothing */
+            }
 
-            }
-            
             await Task.Delay(-1);
         }
 
-       
-        private void FantasyTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs) {
-            var embed = FantasyPortfolioModule.GetLeaderboardEmbed();
-            var winner = FantasyPortfolioModule.GetWinner();
-            var additionalText = "";
+        private void FantasyTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        {
+            try
+            {
+                var embed = FantasyPortfolioModule.GetLeaderboardEmbed();
+                var winner = FantasyPortfolioModule.GetWinner();
+                var additionalText = "";
 
-            TimeSpan span = (Round.CurrentRoundEnd - DateTime.Now);
+                TimeSpan span = (Round.CurrentRoundEnd - DateTime.Now);
 
-            if (Round.CurrentRoundEnd <= DateTime.Now) {
-                Console.WriteLine($"Round {Round.CurrentRoundEnd} Finished. Winner: {winner.UserId}");
-                using (var context = new FantasyPortfolio_DBEntities()) {
-                    if (context.Leaderboards.Any(d => d.RoundId == Round.CurrentRound)) {
-                        if (FantasyPortfolioModule.PrizePool > 0) {
-                            additionalText = $"Congratulations <@{winner.UserId}>! You have won the fantasy portfolio and won {FantasyPortfolioModule.PrizePool} {Preferences.BaseCurrency}";
-                            QTCommands.SendTip(_client.CurrentUser.Id, ulong.Parse(winner.UserId), FantasyPortfolioModule.PrizePool);
+                if (Round.CurrentRoundEnd <= DateTime.Now)
+                {
+                    //DiscordClientNew.WriteToFile($"Round {Round.CurrentRoundEnd} Finished. Winner: {winner.UserId}");
+                    using (var context = new FantasyPortfolio_DBEntities())
+                    {
+                        if (context.Leaderboards.Any(d => d.RoundId == Round.CurrentRound))
+                        {
+                            if (FantasyPortfolioModule.PrizePool > 0)
+                            {
+                                additionalText = $"Congratulations <@{winner.UserId}>! You have won the fantasy portfolio and won {FantasyPortfolioModule.PrizePool} {Preferences.BaseCurrency}";
+                                QTCommands.SendTip(_client.CurrentUser.Id, ulong.Parse(winner.UserId), FantasyPortfolioModule.PrizePool);
+                            }
+                            else
+                            {
+                                additionalText = $"Congratulations <@{winner.UserId}>! You have won the fantasy portfolio! There was no prize.";
+                            }
                         }
-                        else {
-                            additionalText = $"Congratulations <@{winner.UserId}>! You have won the fantasy portfolio! There was no prize.";
+                        else
+                        {
+                            embed.WithDescription("Round has finished! There were no participants in this round, so nobody wins!");
                         }
+                        Round round = new Round { RoundEnds = DateTime.Now.AddDays(Round.RoundDurationDays) };
+                        context.Rounds.Add(round);
+                        context.SaveChanges();
                     }
-                    else {
-                        embed.WithDescription("Round has finished! There were no participants in this round, so nobody wins!");
-                    }
-                    Round round = new Round { RoundEnds = DateTime.Now.AddDays(Round.RoundDurationDays) };
-                    context.Rounds.Add(round);
-                    context.SaveChanges();
                 }
+                else if (span.TotalMilliseconds < fantasyTickerTimer.Interval)
+                {
+                    //Set next interval to 5000ms after the round ends
+                    fantasyTimer.Interval = span.TotalMilliseconds + 5000;
+                    //     //DiscordClientNew.WriteToFile("Next fantasy interval set to 5 seconds");
+                }
+                else
+                {
+                    // Set the next interval to 2 hours
+                    fantasyTickerTimer.Interval = 7200000;
+                    //     //DiscordClientNew.WriteToFile("Next fantasy interval set to 2 hours");
+                }
+                _client.GetGuild(Settings.Default.GuildId).GetTextChannel(Settings.Default.FantasyChannel).SendMessageAsync(additionalText, false, embed);
             }
-            else if (span.TotalMilliseconds < fantasyTickerTimer.Interval) {
-                //Set next interval to 5000ms after the round ends
-                fantasyTimer.Interval = span.TotalMilliseconds + 5000;
-                Console.WriteLine("Next fantasy interval set to 5 seconds");
+            catch (Exception e)
+            {
+                //     //DiscordClientNew.WriteToFile(e.Message);
             }
-            else {
-                // Set the next interval to 2 hours
-                fantasyTickerTimer.Interval = 7200000;
-                Console.WriteLine("Next fantasy interval set to 2 hours");
-            }
-            _client.GetGuild(Settings.Default.GuildId).GetTextChannel(Settings.Default.FantasyChannel).SendMessageAsync(additionalText, false, embed);
-
-
         }
 
-
-
-        private async Task LogAsync(LogMessage log) {
-            Console.WriteLine(log.ToString());
+        private async Task LogAsync(LogMessage log)
+        {
+            //DiscordClientNew.WriteToFile(log.ToString());
         }
 
-        public async Task RegisterCommandsAsync() {
+        public async Task RegisterCommandsAsync()
+        {
             _client.MessageReceived += ClientOnMessageReceived;
+            _client.UserLeft += ClientOnUserLeft;
+            _client.UserJoined += ClientOnUserJoined;
             //await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
             await _commands.AddModulesAsync(typeof(TipModule).Assembly);
             await _commands.AddModulesAsync(typeof(TickerModule).Assembly);
@@ -148,15 +174,51 @@ namespace TipBot_BL {
         }
 
 
-        private async Task ClientOnMessageReceived(SocketMessage socketMessage) {
+        private Task ClientOnUserJoined(SocketGuildUser arg)
+        {
+            try
+            {
+                LeftUsers.RemoveUser(arg.Id.ToString());
+            }
+            catch
+            {
+                //Do Nothing, Nothing we can do
+            }
+
+
+            return null;
+        }
+
+        private Task ClientOnUserLeft(SocketGuildUser arg)
+        {
+            var balance = QTCommands.GetBalance(arg.Id);
+            if (decimal.Parse(balance.Result) > 0)
+            {
+                try
+                {
+                    LeftUsers.AddUser(arg.Id.ToString(), DateTime.Now, arg.Guild.Id.ToString());
+                }
+                catch
+                {
+                    //Do Nothing, what can we do?
+                }
+            }
+            return null;
+        }
+
+        private async Task ClientOnMessageReceived(SocketMessage socketMessage)
+        {
             //Debug
-            if (!(socketMessage is SocketUserMessage message) || message.Author.IsBot) {
+            if (!(socketMessage is SocketUserMessage message) || message.Author.IsBot)
+            {
                 return;
             }
 
             int argPos = 0;
-            if (message.HasStringPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) {
-                if (timer.Enabled) {
+            if (message.HasStringPrefix(CommandPrefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            {
+                if (timer.Enabled)
+                {
                     await message.Channel.SendMessageAsync("Woah! Slow down there! Too much too hard **too fast**");
                     return;
                 }
@@ -165,13 +227,15 @@ namespace TipBot_BL {
 
                 var result = await _commands.ExecuteAsync(context, argPos, _services);
 
-                if (!result.IsSuccess) {
-                    Console.WriteLine(result.ErrorReason);
+                if (!result.IsSuccess)
+                {
+                    //DiscordClientNew.WriteToFile(result.ErrorReason);
                 }
             }
-            else if (message.HasStringPrefix(TickerPrefix, ref argPos)) {
-                if (message.Channel.Id != Settings.Default.PriceCheckChannel) {
-
+            else if (message.HasStringPrefix(TickerPrefix, ref argPos))
+            {
+                if (message.Channel.Id != Settings.Default.PriceCheckChannel)
+                {
                     await message.Channel.SendMessageAsync($"Please use the <#{Settings.Default.PriceCheckChannel}> channel!");
                     return;
                 }
@@ -182,29 +246,64 @@ namespace TipBot_BL {
                 await message.Channel.SendMessageAsync("", false, embed);
             }
         }
+
+        public static void WriteToFile(string Message)
+        {
+            string path = AppDomain.CurrentDomain.BaseDirectory + "\\Logs";
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            string filepath = AppDomain.CurrentDomain.BaseDirectory + "\\Logs\\ServiceLog_" + DateTime.Now.Date.ToShortDateString().Replace('/', '_') + ".txt";
+            if (!File.Exists(filepath))
+            {
+                // Create a file to write to.   
+                using (StreamWriter sw = File.CreateText(filepath))
+                {
+                    sw.WriteLine(DateTime.Now + " - " + Message);
+                }
+            }
+            else
+            {
+                using (StreamWriter sw = File.AppendText(filepath))
+                {
+                    sw.WriteLine(DateTime.Now + " - " + Message);
+                }
+            }
+        }
     }
 
-    public class PriceUpdateController {
-        public async void Thread_ContinuousChecker() {
-            while (true) {
+    public class PriceUpdateController
+    {
+        public async void Thread_ContinuousChecker()
+        {
+            while (true)
+            {
                 var count = 0;
-                using (var context = new FantasyPortfolio_DBEntities()) {
-                    if (context.Coins.Any()) {
-                        foreach (var coin in context.Coins) {
-                            if (coin.LastUpdated <= DateTime.Now.AddMinutes(-20)) {
-                                try {
+                using (var context = new FantasyPortfolio_DBEntities())
+                {
+                    if (context.Coins.Any())
+                    {
+                        foreach (var coin in context.Coins)
+                        {
+                            if (coin.LastUpdated <= DateTime.Now.AddMinutes(-20))
+                            {
+                                try
+                                {
                                     await Coin.UpdateCoinValue(coin.Id);
                                 }
-                                catch (Exception ex) {
-                                    Console.WriteLine($"Failed to Update {coin.TickerName} - {ex.Message}");
+                                catch (Exception ex)
+                                {
+                                    //DiscordClientNew.WriteToFile($"Failed to Update {coin.TickerName} - {ex.Message}");
                                 }
                                 count++;
                             }
-                            if (count == 25) {
-                                Console.WriteLine($"{DateTime.Now} - Limit reached: Sleeping for a minute");
+                            if (count == 25)
+                            {
+                                //DiscordClientNew.WriteToFile($"{DateTime.Now} - Limit reached: Sleeping for a minute");
                                 count = 0;
                                 Thread.Sleep(60000);
-                                Console.WriteLine($"{DateTime.Now} - Continuing");
+                                //DiscordClientNew.WriteToFile($"{DateTime.Now} - Continuing");
                             }
                         }
                     }
@@ -212,5 +311,7 @@ namespace TipBot_BL {
                 }
             }
         }
+
+
     }
 }

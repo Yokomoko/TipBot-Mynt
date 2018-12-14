@@ -24,7 +24,7 @@
         /// </summary>
         private void InitializeComponent() {
             this.serviceProcessInstaller1 = new System.ServiceProcess.ServiceProcessInstaller();
-            this.Groestlcoin_TipBot = new System.ServiceProcess.ServiceInstaller();
+            this.Mynt_TipBot = new System.ServiceProcess.ServiceInstaller();
             // 
             // serviceProcessInstaller1
             // 
@@ -32,22 +32,22 @@
             this.serviceProcessInstaller1.Password = null;
             this.serviceProcessInstaller1.Username = null;
             // 
-            // Groestlcoin_TipBot
+            // Mynt_TipBot
             // 
-            this.Groestlcoin_TipBot.ServiceName = "Groestlcoin Tipbot Service";
-            this.Groestlcoin_TipBot.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            this.Mynt_TipBot.ServiceName = "Mynt Tipbot Service";
+            this.Mynt_TipBot.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
             // ProjectInstaller
             // 
             this.Installers.AddRange(new System.Configuration.Install.Installer[] {
             this.serviceProcessInstaller1,
-            this.Groestlcoin_TipBot});
+            this.Mynt_TipBot});
 
         }
 
         #endregion
 
         private System.ServiceProcess.ServiceProcessInstaller serviceProcessInstaller1;
-        private System.ServiceProcess.ServiceInstaller Groestlcoin_TipBot;
+        private System.ServiceProcess.ServiceInstaller Mynt_TipBot;
     }
 }

@@ -2,7 +2,7 @@
 -- --------------------------------------------------
 -- Entity Designer DDL Script for SQL Server 2005, 2008, 2012 and Azure
 -- --------------------------------------------------
--- Date Created: 09/12/2018 13:09:55
+-- Date Created: 10/25/2018 12:17:20
 -- Generated from EDMX file: C:\Users\achapman\Documents\Visual Studio 2015\Projects\TipBot Mynt\TipBot_BL\FantasyPortfolio\FantasyPortfolio.edmx
 -- --------------------------------------------------
 
@@ -31,17 +31,14 @@ GO
 IF OBJECT_ID(N'[dbo].[FlipResults]', 'U') IS NOT NULL
     DROP TABLE [dbo].[FlipResults];
 GO
+IF OBJECT_ID(N'[dbo].[LeftUsers]', 'U') IS NOT NULL
+    DROP TABLE [dbo].[LeftUsers];
+GO
 IF OBJECT_ID(N'[dbo].[Portfolios]', 'U') IS NOT NULL
     DROP TABLE [dbo].[Portfolios];
 GO
 IF OBJECT_ID(N'[dbo].[Rounds]', 'U') IS NOT NULL
     DROP TABLE [dbo].[Rounds];
-GO
-IF OBJECT_ID(N'[FantasyPortfolio_DBModelStoreContainer].[FlipLeaderboard]', 'U') IS NOT NULL
-    DROP TABLE [FantasyPortfolio_DBModelStoreContainer].[FlipLeaderboard];
-GO
-IF OBJECT_ID(N'[FantasyPortfolio_DBModelStoreContainer].[FlipResultStatistics]', 'U') IS NOT NULL
-    DROP TABLE [FantasyPortfolio_DBModelStoreContainer].[FlipResultStatistics];
 GO
 
 -- --------------------------------------------------
@@ -54,7 +51,8 @@ CREATE TABLE [dbo].[Coins] (
     [TickerId] int  NOT NULL,
     [TickerName] nvarchar(max)  NOT NULL,
     [PriceUSD] decimal(18,8)  NOT NULL,
-    [LastUpdated] datetime  NOT NULL
+    [LastUpdated] datetime  NOT NULL,
+    [Volume24] decimal(28,18)  NULL
 );
 GO
 
@@ -132,6 +130,15 @@ CREATE TABLE [dbo].[FlipResultStatistics] (
 );
 GO
 
+-- Creating table 'LeftUsers'
+CREATE TABLE [dbo].[LeftUsers] (
+    [Id] int  NOT NULL,
+    [UserId] varchar(100)  NULL,
+    [TimeLeft] datetime  NULL,
+    [GuildId] varchar(100)  NULL
+);
+GO
+
 -- --------------------------------------------------
 -- Creating all PRIMARY KEY constraints
 -- --------------------------------------------------
@@ -182,6 +189,12 @@ GO
 ALTER TABLE [dbo].[FlipResultStatistics]
 ADD CONSTRAINT [PK_FlipResultStatistics]
     PRIMARY KEY CLUSTERED ([id] ASC);
+GO
+
+-- Creating primary key on [Id] in table 'LeftUsers'
+ALTER TABLE [dbo].[LeftUsers]
+ADD CONSTRAINT [PK_LeftUsers]
+    PRIMARY KEY CLUSTERED ([Id] ASC);
 GO
 
 -- --------------------------------------------------

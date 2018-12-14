@@ -9,38 +9,39 @@ using Discord;
 using Discord.Commands;
 using TipBot_BL.FantasyPortfolio;
 
-namespace TipBot_BL.DiscordCommands {
-    public class FantasyPortfolioModule : ModuleBase<SocketCommandContext> {
-        public static decimal EntryFee => (decimal)5;
+namespace TipBot_BL.DiscordCommands{
+    public class FantasyPortfolioModule : ModuleBase<SocketCommandContext>{
+        public static decimal EntryFee => Round.CurrentRound > 11 ? 100 : 5;
 
-        //private bool IsInFantasyChannel => Context.Channel.Id == Preferences.FantasyChannel;
-        public static decimal PrizePool {
-            get {
-                using (var context = new FantasyPortfolio_DBEntities()) {
-                    return (context.Leaderboards.Count(d => d.RoundId == Round.CurrentRound) * EntryFee) * (decimal)0.98;
+        public static decimal PrizePool
+        {
+            get
+            {
+                using (var context = new FantasyPortfolio_DBEntities()){
+                    return (context.Leaderboards.Count(d => d.RoundId == Round.CurrentRound) * EntryFee) * (decimal) 0.98;
                 }
             }
         }
 
         [Command("ticker")]
-        public async Task FantasyTicker(string ticker) {
+        public async Task FantasyTicker(string ticker){
             var tickerFormatted = ticker.ToUpper();
             var coins = await Coin.GetTickers(tickerFormatted);
 
             var embed = new EmbedBuilder();
 
-            if (coins.Count > 1) {
+            if (coins.Count > 1){
                 embed.WithTitle("Multiple Coins Found");
-                foreach (var coin in coins) {
+                foreach (var coin in coins){
                     embed.AddInlineField(coin.TickerName, $"${decimal.Parse(Math.Round(coin.PriceUSD, 8).ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint)}");
                 }
                 embed.WithDescription("Multiple coins found with the same ticker, please use the name below.");
             }
-            else if (coins.Count == 0) {
+            else if (coins.Count == 0){
                 embed.WithTitle("No coin found with this ticker");
                 embed.WithDescription("No coin with this ticker has been found.");
             }
-            else {
+            else{
                 var coin = coins.FirstOrDefault();
                 embed.WithTitle($"Fantasy Price of {coin?.TickerName}");
                 embed.WithDescription($"${decimal.Parse(Math.Round(coin.PriceUSD, 8).ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint)}");
@@ -48,13 +49,13 @@ namespace TipBot_BL.DiscordCommands {
 
                 var timeRemainingStr = "";
 
-                if (span.Days > 0) {
+                if (span.Days > 0){
                     timeRemainingStr += $"{span.Days} {(span.Days > 1 ? "Days" : "Day")} ";
                 }
-                if (span.Hours > 0) {
+                if (span.Hours > 0){
                     timeRemainingStr += $"{span.Hours} {(span.Hours > 1 ? "Hours" : "Hour")} ";
                 }
-                if (span.Hours < 1 && span.Minutes > 0) {
+                if (span.Hours < 1 && span.Minutes > 0){
                     timeRemainingStr += $"{span.Minutes} {(span.Minutes > 1 ? "Minutes" : "Minute")}";
                 }
 
@@ -66,7 +67,7 @@ namespace TipBot_BL.DiscordCommands {
         }
 
         [Command("help")]
-        public async Task FantasyHelp() {
+        public async Task FantasyHelp(){
             var embed = new EmbedBuilder();
             embed.WithTitle("MyntBot Fantasy Portfolio");
 
@@ -74,7 +75,7 @@ namespace TipBot_BL.DiscordCommands {
 
             embed.AddField("-join", $"Join the Fantasy Portfolio Round. The current entry fee is {EntryFee} {Preferences.BaseCurrency}");
             embed.AddField("-share", "Share your current holdings with everyone else, or to yourself in a Direct Message");
-            embed.AddField("-buy <amount (USD)|all> <ticker>", "Buy the currency of your choice. Any coin available on Coinmarketcap are availble to buy. The amount is in USD.");
+            embed.AddField("-buy <amount (USD)|all> <ticker>", "Buy the currency of your choice. Any coin available on Coinmarketcap are available to buy. The amount is in USD.");
             embed.AddField("-sell <amount|all> <ticker>", "Sell a currency that you own. The amount is in the currency you've provided.");
             embed.AddField("-ticker <ticker>", "Gets the current rate for a ticker for the fantasy portfolio.");
             embed.AddField("-leaderboard", "Show the current leaderboard standings along with the current prize pool. This is shared once an hour anyway and also when the round expires.");
@@ -83,38 +84,36 @@ namespace TipBot_BL.DiscordCommands {
             embed.WithColor(Color.Blue);
 
             await ReplyAsync("", false, embed);
-
         }
 
         [Command("share")]
-        public async Task Share() {
+        public async Task Share(){
             var sb = new StringBuilder();
             var embed = new EmbedBuilder();
 
-
-            using (var context = new FantasyPortfolio_DBEntities()) {
+            using (var context = new FantasyPortfolio_DBEntities()){
                 var userId = Context.User.Id.ToString();
 
                 var ports = context.LeaderboardTickers.Where(d => d.RoundId == Round.CurrentRound && d.UserId == userId);
-                if (!ports.Any()) {
+                if (!ports.Any()){
                     sb.AppendLine($"You are not signed up to this round. Please ensure you have the entry fee of {EntryFee} {Preferences.BaseCurrency} and type `-join`");
                     embed.WithTitle("Not Signed Up");
                 }
-                else {
+                else{
                     string usdValue = "";
                     decimal totalAmount = 0;
 
-                    foreach (var p in ports) {
+                    foreach (var p in ports){
                         totalAmount += p.DollarValue.GetValueOrDefault(0);
-                        if (p.TickerName == "USD") {
-                            if (!p.DollarValue.HasValue || p.DollarValue == 0) {
+                        if (p.TickerName == "USD"){
+                            if (!p.DollarValue.HasValue || p.DollarValue == 0){
                                 usdValue = "0.00";
                             }
-                            else {
+                            else{
                                 usdValue = p.DollarValue?.ToString("N") ?? "0.00";
                             }
                         }
-                        else {
+                        else{
                             if (p.DollarValue == 0) continue;
                             sb.AppendLine($"**{p.TickerName}** - ${Math.Round(p.DollarValue.GetValueOrDefault(0), 2):N} ({p.CoinCount} {p.TickerName})");
                         }
@@ -130,69 +129,96 @@ namespace TipBot_BL.DiscordCommands {
         }
 
         [Command("sell")]
-        public async Task Sell(string amount, string ticker) {
+        public async Task Sell(string amount, string ticker){
             var userId = Context.User.Id.ToString();
-            if (amount != "all") {
-                if (!CheckBalance(amount, ticker, out var reason)) {
+            if (amount != "all" && !amount.Contains("%")){
+                if (!CheckBalance(amount, ticker, out var reason)){
                     await ReplyAsync($"Error Selling {ticker.ToUpper()} - {reason}");
                     return;
                 }
             }
-            using (var context = new FantasyPortfolio_DBEntities()) {
+
+            using (var context = new FantasyPortfolio_DBEntities()){
                 var coins = await Coin.GetTickers(ticker);
 
                 var embed = new EmbedBuilder();
 
-                if (coins.Count > 1) {
+                if (coins.Count > 1){
                     embed.WithTitle("Multiple Coins Found");
-                    foreach (var coin in coins) {
+                    foreach (var coin in coins){
                         embed.AddInlineField(coin.TickerName, $"${decimal.Parse(Math.Round(coin.PriceUSD, 8).ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint)}");
                     }
                     embed.WithDescription("Multiple coins found with the same ticker, please use the name below.");
                     await ReplyAsync("", false, embed);
                     return;
                 }
-                else if (coins.Count == 0) {
+                else if (coins.Count == 0){
                     embed.WithTitle("No coin found with this ticker");
                     embed.WithDescription("No coin with this ticker has been found.");
                     await ReplyAsync("", false, embed);
                     return;
                 }
-                else {
+                else{
                     var coin = coins.FirstOrDefault();
 
                     var portCoin = context.Portfolios.FirstOrDefault(d => d.RoundId == Round.CurrentRound && d.UserId == userId && d.TickerId == coin.TickerId);
+                    var isPercent = false;
 
-                    if (amount == "all") {
+                    if (amount == "all"){
                         amount = portCoin?.CoinAmount.ToString();
                     }
+                    else if (amount.Contains("%")){
+                        amount = amount.Split('%')[0];
+                        isPercent = true;
+                    }
 
-                    if (decimal.TryParse(amount, out var amountDec)) {
+                    if (decimal.TryParse(amount, out var amountDec)){
+                        if (portCoin == null){
+                            portCoin = new Portfolio{
+                                                        UserId = Context.User.Id.ToString(),
+                                                        TickerId = coin.TickerId,
+                                                        RoundId = Round.CurrentRound,
+                                                        CoinAmount = 0
+                                                    };
+                            context.Portfolios.Add(portCoin);
+                        }
+                        else{
+                            context.Portfolios.Attach(portCoin);
+                        }
+
+                        if (isPercent){
+                            if (amountDec > 100){
+                                embed.WithTitle("Cannot sell greater than 100%");
+                                embed.WithDescription("Cannot sell more than 100% of your coin portfolio.");
+                                await ReplyAsync("", false, embed);
+                                return;
+                            }
+                            else if (amountDec < 0 || amountDec == 0){
+                                embed.WithTitle("Cannot sell less than 0%");
+                                embed.WithDescription("Cannot sell 0% or less of your coin portfolio.");
+                                await ReplyAsync("", false, embed);
+                                return;
+                            }
+                            amountDec = portCoin.CoinAmount * (amountDec / 100);
+                        }
                         amountDec = Math.Round(amountDec, 8);
 
                         var usdAmount = context.Portfolios.FirstOrDefault(d => d.RoundId == Round.CurrentRound && d.UserId == userId && d.TickerId == -1);
 
-                        var roundedAmount = Math.Round(amountDec * coin.PriceUSD, 8) * (decimal)0.995;
+                        var roundedAmount = Math.Round(amountDec * coin.PriceUSD, 8) * (decimal) 0.995;
 
-                        if (portCoin == null) {
-                            portCoin = new Portfolio {
-                                UserId = Context.User.Id.ToString(),
-                                TickerId = coin.TickerId,
-                                RoundId = Round.CurrentRound,
-                                CoinAmount = 0
-                            };
-                            context.Portfolios.Add(portCoin);
+                        if (roundedAmount == 0){
+                            await ReplyAsync("Sell failed: You do not own any of this coin");
+                            return;
                         }
-                        else {
-                            context.Portfolios.Attach(portCoin);
-                        }
+
                         portCoin.CoinAmount -= amountDec;
                         Debug.Assert(usdAmount != null, nameof(usdAmount) + " != null");
                         usdAmount.CoinAmount = usdAmount.CoinAmount + roundedAmount;
-                        try {
+                        try{
                             context.SaveChanges();
                         }
-                        catch (Exception e) {
+                        catch (Exception e){
                             await ReplyAsync(e.Message + Environment.NewLine + Environment.NewLine + e.InnerException?.Message);
                             return;
                         }
@@ -204,26 +230,26 @@ namespace TipBot_BL.DiscordCommands {
             await ReplyAsync("Error connecting to database... Please try again");
         }
 
-
         [Command("buy")]
-        public async Task Buy(string amount, string ticker) {
+        public async Task Buy(string amount, string ticker){
             var userId = Context.User.Id.ToString();
+            var isPercent = false;
 
-            if (amount != "all") {
-                if (!CheckBalance(amount, "USD", out var reason)) {
+            if (amount != "all" && !amount.Contains("%")){
+                if (!CheckBalance(amount, "USD", out var reason)){
                     await ReplyAsync($"Error Buying {ticker.ToUpper()} - {reason}");
                     return;
                 }
             }
 
-            using (var context = new FantasyPortfolio_DBEntities()) {
+            using (var context = new FantasyPortfolio_DBEntities()){
                 var coins = await Coin.GetTickers(ticker);
 
                 var embed = new EmbedBuilder();
 
-                if (coins.Count > 1) {
+                if (coins.Count > 1){
                     embed.WithTitle("Multiple Coins Found");
-                    foreach (var coin in coins) {
+                    foreach (var coin in coins){
                         embed.AddInlineField(coin.TickerName, $"${decimal.Parse(Math.Round(coin.PriceUSD, 8).ToString(), NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint)}");
                     }
 
@@ -231,62 +257,77 @@ namespace TipBot_BL.DiscordCommands {
                     await ReplyAsync("", false, embed);
                     return;
                 }
-                else if (coins.Count == 0) {
+                else if (coins.Count == 0){
                     embed.WithTitle("No coin found with this ticker");
                     embed.WithDescription("No coin with this ticker has been found.");
                     await ReplyAsync("", false, embed);
                     return;
                 }
-                else {
+                else{
                     var coin = coins.FirstOrDefault();
 
-                    if (amount == "all") {
-                        amount = context.Portfolios.FirstOrDefault(d => d.UserId == userId && d.TickerId == -1 && Round.CurrentRound == d.RoundId)?.CoinAmount.ToString();
+                    if (coin.Volume24 != null && coin.Volume24 < 50000){
+                        embed.WithTitle("Volume is too low for this ticker");
+                        embed.WithDescription($"Volume is too low for this ticker. Minimum volume: $50,000 (Current: ${coin.Volume24:N})");
+                        await ReplyAsync("", false, embed);
+                        return;
                     }
 
-                    if (decimal.TryParse(amount, out var amountDec)) {
-                        amountDec = Math.Round(amountDec, 8);
+                    if (amount == "all"){
+                        amount = context.Portfolios.FirstOrDefault(d => d.UserId == userId && d.TickerId == -1 && Round.CurrentRound == d.RoundId)?.CoinAmount.ToString();
+                    }
+                    else if (amount.Contains("%")){
+                        isPercent = true;
+                        amount = amount.Split('%')[0];
+                    }
 
-                        var feeAmount = amountDec * (decimal)0.005;
-                        amountDec = amountDec * (decimal)0.995;
-
-                        if (coin == null) {
-                            await ReplyAsync($"No currency found that matches the ticker {ticker.ToUpper()}");
-                            return;
+                    if (decimal.TryParse(amount, out var amountDec)){
+                        var portCoin = context.Portfolios.FirstOrDefault(d => d.RoundId == Round.CurrentRound && d.UserId == userId && d.TickerId == coin.TickerId);
+                        if (portCoin == null){
+                            portCoin = new Portfolio{
+                                                        UserId = Context.User.Id.ToString(),
+                                                        TickerId = coin.TickerId,
+                                                        RoundId = Round.CurrentRound,
+                                                        CoinAmount = 0
+                                                    };
+                            context.Portfolios.Add(portCoin);
                         }
-
+                        else{
+                            context.Portfolios.Attach(portCoin);
+                        }
                         var usdAmount = context.Portfolios.FirstOrDefault(d => d.RoundId == Round.CurrentRound && d.UserId == userId && d.TickerId == -1);
 
-                        var usdAmount2 = usdAmount.CoinAmount;
-
-                        var portCoin = context.Portfolios.FirstOrDefault(d => d.RoundId == Round.CurrentRound && d.UserId == userId && d.TickerId == coin.TickerId);
+                        if (isPercent){
+                            if (amountDec > 100){
+                                embed.WithTitle("Cannot buy greater than 100%");
+                                embed.WithDescription("Cannot buy more than 100% of your USD holdings.");
+                                await ReplyAsync("", false, embed);
+                                return;
+                            }
+                            else if (amountDec < 0 || amountDec == 0){
+                                embed.WithTitle("Cannot buy 0% or less");
+                                embed.WithDescription("Cannot buy 0% or less of your USD holdings.");
+                                await ReplyAsync("", false, embed);
+                                return;
+                            }
+                            amountDec = Math.Round(usdAmount.CoinAmount * (amountDec / 100), 8);
+                        }
+                        var feeAmount = amountDec * (decimal) 0.005;
+                        amountDec = amountDec * (decimal) 0.995;
 
                         var roundedAmount = Math.Round(amountDec / coin.PriceUSD, 8);
 
-                        if (roundedAmount == 0) {
+                        if (roundedAmount == 0){
                             await ReplyAsync("Buy failed: Amount bought would be 0.");
                             return;
                         }
 
-                        if (portCoin == null) {
-                            portCoin = new Portfolio {
-                                UserId = Context.User.Id.ToString(),
-                                TickerId = coin.TickerId,
-                                RoundId = Round.CurrentRound,
-                                CoinAmount = 0
-                            };
-                            context.Portfolios.Add(portCoin);
-                        }
-                        else {
-                            context.Portfolios.Attach(portCoin);
-                        }
-
                         portCoin.CoinAmount += roundedAmount;
                         if (usdAmount != null) usdAmount.CoinAmount = usdAmount.CoinAmount - amountDec - feeAmount;
-                        try {
+                        try{
                             context.SaveChanges();
                         }
-                        catch (Exception e) {
+                        catch (Exception e){
                             await ReplyAsync(e.Message + Environment.NewLine + Environment.NewLine + e.InnerException?.Message);
                             return;
                         }
@@ -300,52 +341,52 @@ namespace TipBot_BL.DiscordCommands {
         }
 
         [Command("leaderboard")]
-        public async Task Leaderboard() {
+        public async Task Leaderboard(){
             var embed = GetLeaderboardEmbed();
             await ReplyAsync("", false, embed);
         }
 
-        public static Leaderboard GetWinner() {
-            using (var context = new FantasyPortfolio_DBEntities()) {
+        public static Leaderboard GetWinner(){
+            using (var context = new FantasyPortfolio_DBEntities()){
                 return context.Leaderboards.FirstOrDefault(d => d.RoundId == Round.CurrentRound);
             }
         }
 
-        public static EmbedBuilder GetLeaderboardEmbed() {
-            using (var context = new FantasyPortfolio_DBEntities()) {
+        public static EmbedBuilder GetLeaderboardEmbed(){
+            using (var context = new FantasyPortfolio_DBEntities()){
                 var leaderboards = context.Leaderboards.Where(d => d.RoundId == Round.CurrentRound).OrderByDescending(d => d.totalamount);
 
                 var position = 1;
                 var sb = new StringBuilder();
-                if (leaderboards.Any()) {
-                    foreach (var player in leaderboards) {
-                        sb.AppendLine($"{position} - {DiscordClientNew._client.GetUser(ulong.Parse(player.UserId)).Username} - ${player.totalamount:N}");
+                if (leaderboards.Any()){
+                    foreach (var player in leaderboards){
+                        sb.AppendLine($"{position} - {DiscordClientNew._client.GetUser(ulong.Parse(player.UserId))?.Username ?? player.UserId} - ${player.totalamount:N}");
                         position++;
                     }
                 }
-                else {
+                else{
                     sb.AppendLine("No players currently participating in this round");
                 }
 
                 sb.AppendLine(Environment.NewLine);
 
-                var embed = new EmbedBuilder {
-                    Title = $"Mynt Discord Leaderboard - Round {Round.CurrentRound}",
-                    Description = sb.ToString()
-                };
+                var embed = new EmbedBuilder{
+                                                Title = $"Mynt Discord Leaderboard - Round {Round.CurrentRound}",
+                                                Description = sb.ToString()
+                                            };
 
                 TimeSpan span = (Round.CurrentRoundEnd - DateTime.Now);
 
                 var timeRemainingStr = "";
 
-                if (span.Days > 0) {
+                if (span.Days > 0){
                     timeRemainingStr += $"{span.Days} {(span.Days > 1 ? "Days" : "Day")} ";
                 }
 
-                if (span.Hours > 0) {
+                if (span.Hours > 0){
                     timeRemainingStr += $"{span.Hours} {(span.Hours > 1 ? "Hours" : "Hour")} ";
                 }
-                if (span.Hours < 1 && span.Minutes > 0) {
+                if (span.Hours < 1 && span.Minutes > 0){
                     timeRemainingStr += $"{span.Minutes} {(span.Minutes > 1 ? "Minutes" : "Minute")}";
                 }
 
@@ -356,51 +397,49 @@ namespace TipBot_BL.DiscordCommands {
             }
         }
 
-        public bool CheckBalance(string amount, string ticker, out string reason) {
+        public bool CheckBalance(string amount, string ticker, out string reason){
             reason = "";
             var userId = Context.User.Id.ToString();
 
-            if (decimal.TryParse(amount, out var amountDec)) {
-                using (var context = new FantasyPortfolio_DBEntities()) {
+            if (decimal.TryParse(amount, out var amountDec)){
+                using (var context = new FantasyPortfolio_DBEntities()){
                     int tickerId;
 
-                    if (ticker.ToUpper() == "USD") {
+                    if (ticker.ToUpper() == "USD"){
                         tickerId = -1;
                     }
-                    else {
+                    else{
                         var coins = Coin.GetTickers(ticker);
-                        if (coins.Result.Count > 1) {
+                        if (coins.Result.Count > 1){
                             var nameStrings = new List<string>();
-                            foreach (var coin in coins.Result) {
+                            foreach (var coin in coins.Result){
                                 nameStrings.Add($"`{coin.TickerName}`");
                             }
-                            reason = $"Multiple coinsin database with this ticker exist, please use the coin name instead: {string.Join(", ", nameStrings)})";
+                            reason = $"Multiple coins in database with this ticker exist, please use the coin name instead: {string.Join(", ", nameStrings)})";
                             return false;
                         }
-                        else if (coins.Result.Count == 0) {
+                        else if (coins.Result.Count == 0){
                             reason = "No coin found with this ticker or name";
                             return false;
                         }
-                        else {
+                        else{
                             // ReSharper disable once PossibleNullReferenceException - Not null as above
                             tickerId = coins.Result.FirstOrDefault().TickerId;
                         }
                     }
                     var value = context.Portfolios.FirstOrDefault(d => d.UserId == userId && d.TickerId == tickerId && d.RoundId == Round.CurrentRound);
-                    if (value != null && value.CoinAmount >= amountDec) {
+                    if (value != null && value.CoinAmount >= amountDec){
                         return true;
                     }
                     reason = "Not enough balance";
                     return false;
-
                 }
             }
             reason = "Invalid input";
             return false;
         }
 
-
-        public class Players {
+        public class Players{
             public string UserId;
             public decimal Balance;
         }

@@ -22,7 +22,7 @@ namespace TipBot_BL.DiscordCommands {
             var tipSb = new StringBuilder();
             tipSb.AppendLine("**-rain:** Rains some of your funds to other users that have opted in");
             tipSb.AppendLine("**-optin:** Opts you in to receive random Mynt rains from the tip bot");
-            tipSb.AppendLine("**-optout:** Opts you outof receiving random Mynt rains from the tip bot :(");
+            tipSb.AppendLine("**-optout:** Opts you out of receiving random Mynt rains from the tip bot :(");
             tipSb.AppendLine("**-address:** Gets your deposit address to use the tipping functionality - Optional: add 'qr' to the end to get a QR code (-address qr)");
             tipSb.AppendLine($"**-balance:** Gets your {Preferences.BaseCurrency} balance from the bot");
             tipSb.AppendLine("**-withdraw:** Withdraws your balance. Syntax: -withdraw [address]");
@@ -72,14 +72,26 @@ namespace TipBot_BL.DiscordCommands {
             await ReplyAsync("", false, embed);
         }
 
+        [Command("exchanges")]
+        public async Task GetExchanges(){
+            var embed = new EmbedBuilder();
+            var sb = new StringBuilder();
+            sb.AppendLine($"You can buy and sell {Preferences.BaseCurrency} at the following exchanges: ");
+            sb.AppendLine("[Swiftex](https://www.swiftex.co/)");
+            sb.AppendLine("[AltMarkets](https://altmarkets.cc/market/BTC-MYNT?ref=1104)");
+
+            embed.WithDescription(sb.ToString());
+
+            await ReplyAsync("", false, embed);
+        }
 
         private static EmbedBuilder GetPoolEmbed() {
             var embed = new EmbedBuilder();
             embed.WithTitle($"{Preferences.BaseCurrency} Mining Pool");
-            embed.WithDescription("You want to mine MYNT?\nHaving Difficulties? Head over to the <#485466190349598740> channel to get support from the developers and the community");
+            embed.WithDescription($"You want to mine {Preferences.BaseCurrency}?\nHaving Difficulties? Head over to the <#485466190349598740> channel to get support from the developers and the community");
             embed.WithUrl("http://pool.myntcurrency.org");
 
-            embed.AddField("MINING POOL", "http://pool.myntcurrency.org");
+            embed.AddField("MINING POOLS", "http://pool.myntcurrency.org\n https://arcpool.com/");
 
             var minerSb = new StringBuilder();
             minerSb.AppendLine("CPU MINER:\nhttps://bitbucket.org/myntcurrency/mynt-core/downloads/cpuminer-opt-mynt.zip");
@@ -97,6 +109,8 @@ namespace TipBot_BL.DiscordCommands {
 
             return embed;
         }
+
+        
 
     }
 }

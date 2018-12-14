@@ -33,5 +33,6 @@ namespace TipBot_BL.FantasyPortfolio
         public virtual DbSet<FlipResults> FlipResults { get; set; }
         public virtual DbSet<FlipLeaderboard> FlipLeaderboard { get; set; }
         public virtual DbSet<FlipResultStatistics> FlipResultStatistics { get; set; }
+        public virtual DbSet<LeftUsers> LeftUsers { get; set; }
     }
 }

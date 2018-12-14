@@ -1,28 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 using Discord;
-using Discord.WebSocket;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using TipBot_BL;
 
-namespace Tip {
-    class Program {
-        static void Main() {
-            var discordClient = new DiscordClientNew(); //Discord Token
-            discordClient.RunBotAsync();
+namespace Tip{
+    class Program{
+        static DiscordClientNew DiscordClient = new DiscordClientNew();
 
+        static void Main(){
+            DiscordClient.RunBotAsync();
+            System.AppDomain.CurrentDomain.UnhandledException += UnhandledExceptionTrapper;
 
-            //discordClient.Start();
-           Console.ReadLine();
+            Console.ReadLine();
         }
 
-
+        static void UnhandledExceptionTrapper(object sender, UnhandledExceptionEventArgs e){
+            if (e.IsTerminating){
+                Console.WriteLine(e.ExceptionObject.ToString());
+                Console.ReadLine();
+                Environment.Exit(1);
+            }
+            else{
+                Console.WriteLine(e.ExceptionObject.ToString());
+                try{
+                    if (DiscordClientNew._client?.ConnectionState == ConnectionState.Disconnected){
+                        DiscordClient.RunBotAsync();
+                    }
+                }
+                catch{
+                    //Do Nothing
+                }
+            }
+        }
     }
 }

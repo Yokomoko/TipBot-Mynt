@@ -9,11 +9,6 @@ using TipBot_BL.DiscordCommands;
 namespace TipBot_BL.FantasyPortfolio {
     public partial class FlipResults {
 
-        //public static GetFlipboard() {
-        //    using (var context = new FantasyPortfolio_DBEntities()) {
-        //        context.
-        //    }
-        //}
         public static List<FlipLeaderboard> GetLeaderboardBySpend() {
             using (var context = new FantasyPortfolio_DBEntities()) {
                 return context.FlipLeaderboard.OrderByDescending(u => u.TotalBet.Value).Take(10).ToList();

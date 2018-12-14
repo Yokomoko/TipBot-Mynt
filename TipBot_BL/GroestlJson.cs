@@ -38,7 +38,7 @@ namespace TipBot_BL {
                 return data;
             }
             catch (Exception e) {
-                Console.WriteLine(e.Message);
+                DiscordClientNew.WriteToFile(e.Message);
                 return "Error";
             }
         }

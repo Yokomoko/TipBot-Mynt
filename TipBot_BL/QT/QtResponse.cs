@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -14,7 +15,15 @@ namespace TipBot_BL.QT {
         public string Id { get; set; }
         [JsonProperty(PropertyName = "result")]
         public string Result { get; set; }
+        [JsonProperty(PropertyName = "error")]
+        public string Error { get; set; }
+    }
 
+    public class QtResponseMulti{
+        [JsonProperty(PropertyName = "id")]
+        public string Id { get; set; }
+        [JsonProperty(PropertyName = "result")]
+        public Dictionary<string, decimal> Result { get; set; }
         [JsonProperty(PropertyName = "error")]
         public string Error { get; set; }
     }
@@ -33,21 +42,19 @@ namespace TipBot_BL.QT {
             return false;
         }
 
-        public static bool CheckHouseBalance(ulong userId, decimal amount)
-        {
-            try
-            {
-                if (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) >= amount)
-                {
+        public static bool CheckHouseBalance(ulong userId, decimal amount) {
+            try {
+                if (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) >= amount) {
                     return true;
                 }
             }
-            catch
-            {
+            catch {
                 return false;
             }
             return false;
         }
+
+        public static decimal MinimumWithdraw => (decimal)0.1;
 
 
         public static string SendTip(ulong fromuserId, ulong touserId, decimal amount) {
@@ -58,15 +65,51 @@ namespace TipBot_BL.QT {
             return "Not enough funds";
         }
 
+        public static string SendTip(string fromuserId, string touserId, decimal amount) {
+            if (decimal.Parse(GetBalance(fromuserId).Result) >= amount) {
+                var obj = GroestlJson.TipBotRequest("move", new List<string> { fromuserId.ToString(), touserId.ToString(), amount.ToString() });
+                return $"{JsonConvert.DeserializeObject<QtResponse>(obj).Result}";
+            }
+            return "Not enough funds";
+        }
+
         public static QtResponse Withdraw(ulong userId, string address) {
-            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) - (decimal)0.00025000).ToString() });
+            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (decimal.Parse(GetBalance(userId).Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent) - (decimal)0.01000000).ToString() });
             var response = JsonConvert.DeserializeObject<QtResponse>(obj);
+
+            try {
+                var balance = decimal.Parse(GetBalance(userId).Result);
+                //If balance is less than zero after withdraw, reimburse from tip bot
+                if (balance < 0 && balance > -1) {
+                    SendTip(479566352810770472, userId, balance);
+                }
+                else {
+                    //Otherwise send the remaining fee to the tip bot
+                    SendTip(userId, 479566352810770472, balance);
+                }
+            }
+            catch {
+                //Do Nothing
+            }
+
+
             return response;
         }
 
         public static QtResponse Withdraw(ulong userId, string address, decimal amount) {
-            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (amount - (decimal)0.00025000).ToString() });
+            var obj = GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), address, (amount - (decimal)0.01000000).ToString() });
             var response = JsonConvert.DeserializeObject<QtResponse>(obj);
+
+            try {
+                var balance = decimal.Parse(GetBalance(userId).Result);
+                //If balance is less than zero after withdraw, reimburse from tip bot
+                if (balance < 0 && balance > -1) {
+                    SendTip(479566352810770472, userId, balance);
+                }
+            }
+            catch {
+                //Do Nothing
+            }
             return response;
         }
 
@@ -85,24 +128,26 @@ namespace TipBot_BL.QT {
                 return response;
             }
             catch (Exception e) {
-                Console.WriteLine(e.Message);
+                DiscordClientNew.WriteToFile(e.Message);
                 return null;
             }
         }
 
 
-
-        public static string Rain(ulong userId, List<ulong> users, int amount, int numberOfPeople = 5) {
-            var sb = new StringBuilder();
-
-            foreach (var user in users) {
-                GroestlJson.TipBotRequest("sendfrom", new List<string> { userId.ToString(), GetAddress(user), (amount / numberOfPeople).ToString() });
+        public static QtResponse GetBalance(string userId) {
+            try {
+                var obj = GroestlJson.TipBotRequest("getbalance", new List<string> { userId.ToString() });
+                var response = JsonConvert.DeserializeObject<QtResponse>(obj);
+                if (!string.IsNullOrEmpty(response.Result)) {
+                    response.Result = decimal.Parse(response.Result, NumberStyles.AllowDecimalPoint | NumberStyles.AllowExponent).ToString();
+                }
+                return response;
             }
-
-            sb.AppendLine($"{String.Join(", ", users)}, congratulations! You have been awarded {0} Mynt");
-            return sb.ToString();
+            catch (Exception e) {
+                DiscordClientNew.WriteToFile(e.Message);
+                return null;
+            }
         }
-
 
         public static string GetAddress(ulong userId) {
             try {
@@ -112,6 +157,17 @@ namespace TipBot_BL.QT {
             catch {
                 return "Error getting your wallet. Please Contact Yokomoko.";
             }
+        }
+
+        public static Dictionary<string, decimal> ListAccounts(){
+            try{
+                var obj = GroestlJson.TipBotRequest("listaccounts", new List<string>());
+                return JsonConvert.DeserializeObject<QtResponseMulti>(obj).Result;
+            }
+            catch{
+                return null;
+            }
+            
         }
     }
 }

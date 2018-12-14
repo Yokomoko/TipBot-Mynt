@@ -14,6 +14,7 @@
     <EntitySet Name="FlipResults" EntityType="FantasyPortfolio_DBModel.Store.FlipResults" store:Type="Tables" Schema="dbo" />
     <EntitySet Name="FlipLeaderboard" EntityType="FantasyPortfolio_DBModel.Store.FlipLeaderboard" store:Type="Tables" Schema="dbo" />
     <EntitySet Name="FlipResultStatistics" EntityType="FantasyPortfolio_DBModel.Store.FlipResultStatistics" store:Type="Tables" Schema="dbo" />
+    <EntitySet Name="LeftUsers" EntityType="FantasyPortfolio_DBModel.Store.LeftUsers" store:Type="Tables" Schema="dbo" />
     <AssociationSet Name="FK_RoundPortfolio" Association="FantasyPortfolio_DBModel.Store.FK_RoundPortfolio">
       <End Role="Rounds" EntitySet="Rounds" />
       <End Role="Portfolios" EntitySet="Portfolios" />
@@ -28,6 +29,7 @@
     <Property Name="TickerName" Type="nvarchar(max)" Nullable="false" />
     <Property Name="PriceUSD" Type="decimal" Nullable="false" Precision="18" Scale="8" />
     <Property Name="LastUpdated" Type="datetime" Nullable="false" />
+    <Property Name="Volume24" Type="decimal" Nullable="true" Precision="28" Scale="18" />
   </EntityType>
   <EntityType Name="Portfolios">
     <Key>
@@ -106,6 +108,15 @@
     <Property Name="HeadFlips" Type="int" Nullable="true" />
     <Property Name="TailFlips" Type="int" Nullable="true" />
   </EntityType>
+  <EntityType Name="LeftUsers">
+    <Key>
+      <PropertyRef Name="Id" />
+    </Key>
+    <Property Name="Id" Type="int" Nullable="false" />
+    <Property Name="UserId" Type="varchar" Nullable="true" MaxLength="100" />
+    <Property Name="TimeLeft" Type="datetime" Nullable="true" />
+    <Property Name="GuildId" Type="varchar" Nullable="true" MaxLength="100" />
+  </EntityType>
   <Association Name="FK_RoundPortfolio">
     <End Role="Rounds" Type="FantasyPortfolio_DBModel.Store.Rounds" Multiplicity="1" />
     <End Role="Portfolios" Type="FantasyPortfolio_DBModel.Store.Portfolios" Multiplicity="*" />
@@ -131,6 +142,7 @@
           <Property Name="TickerName" Type="String" Nullable="false" MaxLength="Max" Unicode="true" FixedLength="false" />
           <Property Name="PriceUSD" Type="Decimal" Precision="18" Scale="8" Nullable="false" />
           <Property Name="LastUpdated" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="Volume24" Type="Decimal" Precision="28" Scale="18" />
         </EntityType>
         <EntityType Name="Portfolio">
           <Key>
@@ -176,6 +188,7 @@
           <EntitySet Name="FlipResults" EntityType="FantasyPortfolio_DBModel.FlipResults" />
           <EntitySet Name="FlipLeaderboard" EntityType="FantasyPortfolio_DBModel.FlipLeaderboard" />
           <EntitySet Name="FlipResultStatistics" EntityType="FantasyPortfolio_DBModel.FlipResultStatistics" />
+          <EntitySet Name="LeftUsers" EntityType="FantasyPortfolio_DBModel.LeftUsers" />
         </EntityContainer>
         <EntityType Name="Leaderboard">
           <Key>
@@ -237,6 +250,15 @@
           <Property Name="HeadFlips" Type="Int32" />
           <Property Name="TailFlips" Type="Int32" />
         </EntityType>
+        <EntityType Name="LeftUsers">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" />
+          <Property Name="UserId" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="TimeLeft" Type="DateTime" Precision="3" />
+          <Property Name="GuildId" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+        </EntityType>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -251,6 +273,7 @@
           <ScalarProperty Name="TickerName" ColumnName="TickerName" />
           <ScalarProperty Name="PriceUSD" ColumnName="PriceUSD" />
           <ScalarProperty Name="LastUpdated" ColumnName="LastUpdated" />
+          <ScalarProperty Name="Volume24" ColumnName="Volume24" />
         </MappingFragment>
       </EntityTypeMapping>
     </EntitySetMapping>
@@ -332,6 +355,16 @@
           <ScalarProperty Name="PaidIn" ColumnName="PaidIn" />
           <ScalarProperty Name="HeadFlips" ColumnName="HeadFlips" />
           <ScalarProperty Name="TailFlips" ColumnName="TailFlips" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="LeftUsers">
+      <EntityTypeMapping TypeName="IsTypeOf(FantasyPortfolio_DBModel.LeftUsers)">
+        <MappingFragment StoreEntitySet="LeftUsers">
+          <ScalarProperty Name="Id" ColumnName="Id" />
+          <ScalarProperty Name="UserId" ColumnName="UserId" />
+          <ScalarProperty Name="TimeLeft" ColumnName="TimeLeft" />
+          <ScalarProperty Name="GuildId" ColumnName="GuildId" />
         </MappingFragment>
       </EntityTypeMapping>
     </EntitySetMapping>

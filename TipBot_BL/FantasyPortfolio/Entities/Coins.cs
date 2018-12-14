@@ -33,6 +33,7 @@ namespace TipBot_BL.FantasyPortfolio {
                         context.Coins.Attach(coin);
                     }
                     var valuePrice = tickerResponse.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Price;
+                    coin.Volume24 = (decimal?)tickerResponse.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Volume24H;
                     if (valuePrice != null) coin.PriceUSD = (decimal)valuePrice;
                     context.SaveChanges();
                 }
@@ -56,6 +57,7 @@ namespace TipBot_BL.FantasyPortfolio {
 
                 foreach (var listing in listingSingle) {
                     var tickerResponse = await TickerModule.priceClientNew.GetTickerAsync((int)listing.Id);
+
                     //If there are more than one listing of the same name, search the database using website slug, otherwise use the ticker name.
                     Coin coin;
                     if (listingSingle.Count > 1) {
@@ -75,6 +77,7 @@ namespace TipBot_BL.FantasyPortfolio {
                         if (newCoin.PriceUSD == 0) {
                             var valuePrice = tickerResponse.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Price;
                             if (valuePrice != null) newCoin.PriceUSD = (decimal)valuePrice;
+                            newCoin.Volume24 = (decimal?)tickerResponse.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Volume24H;
                         }
                         context.SaveChanges();
                         coinList.Add(newCoin);
@@ -95,8 +98,9 @@ namespace TipBot_BL.FantasyPortfolio {
                     coin.LastUpdated = DateTime.Now;
                     var valuePrice = ticker.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Price;
                     if (valuePrice != null) coin.PriceUSD = (decimal)valuePrice;
+                    coin.Volume24 = (decimal?)ticker.Data.Quotes.FirstOrDefault(d => d.Key == "USD").Value.Volume24H;
                     context.SaveChanges();
-                    Console.WriteLine($"{DateTime.Now} - Updated {coin.TickerName} price.");
+                    DiscordClientNew.WriteToFile($"{DateTime.Now} - Updated {coin.TickerName} price.");
                 }
             }
 
