@@ -85,12 +85,12 @@ namespace TipBot_BL
                 AutoReset = true,
                 Enabled = true
             };
-            ////DiscordClientNew.WriteToFile("Timer Started");
+            WriteToFile("Timer Started");
 
             try
             {
                 await _client.CurrentUser.ModifyAsync(x => x.Username = "MyntTip");
-                //     //DiscordClientNew.WriteToFile("Name Changed");
+                WriteToFile("Name Changed");
             }
             catch
             { /* Do Nothing */
@@ -111,7 +111,7 @@ namespace TipBot_BL
 
                 if (Round.CurrentRoundEnd <= DateTime.Now)
                 {
-                    //DiscordClientNew.WriteToFile($"Round {Round.CurrentRoundEnd} Finished. Winner: {winner.UserId}");
+                    WriteToFile($"Round {Round.CurrentRoundEnd} Finished. Winner: {winner.UserId}");
                     using (var context = new FantasyPortfolio_DBEntities())
                     {
                         if (context.Leaderboards.Any(d => d.RoundId == Round.CurrentRound))
@@ -139,25 +139,25 @@ namespace TipBot_BL
                 {
                     //Set next interval to 5000ms after the round ends
                     fantasyTimer.Interval = span.TotalMilliseconds + 5000;
-                    //     //DiscordClientNew.WriteToFile("Next fantasy interval set to 5 seconds");
+                    DiscordClientNew.WriteToFile("Next fantasy interval set to 5 seconds");
                 }
                 else
                 {
                     // Set the next interval to 2 hours
                     fantasyTickerTimer.Interval = 7200000;
-                    //     //DiscordClientNew.WriteToFile("Next fantasy interval set to 2 hours");
+                    DiscordClientNew.WriteToFile("Next fantasy interval set to 2 hours");
                 }
                 _client.GetGuild(Settings.Default.GuildId).GetTextChannel(Settings.Default.FantasyChannel).SendMessageAsync(additionalText, false, embed);
             }
             catch (Exception e)
             {
-                //     //DiscordClientNew.WriteToFile(e.Message);
+                WriteToFile(e.Message);
             }
         }
 
         private async Task LogAsync(LogMessage log)
         {
-            //DiscordClientNew.WriteToFile(log.ToString());
+            WriteToFile(log.ToString());
         }
 
         public async Task RegisterCommandsAsync()
@@ -229,7 +229,7 @@ namespace TipBot_BL
 
                 if (!result.IsSuccess)
                 {
-                    //DiscordClientNew.WriteToFile(result.ErrorReason);
+                    WriteToFile(result.ErrorReason);
                 }
             }
             else if (message.HasStringPrefix(TickerPrefix, ref argPos))
@@ -294,16 +294,16 @@ namespace TipBot_BL
                                 }
                                 catch (Exception ex)
                                 {
-                                    //DiscordClientNew.WriteToFile($"Failed to Update {coin.TickerName} - {ex.Message}");
+                                DiscordClientNew.WriteToFile($"Failed to Update {coin.TickerName} - {ex.Message}");
                                 }
                                 count++;
                             }
                             if (count == 25)
                             {
-                                //DiscordClientNew.WriteToFile($"{DateTime.Now} - Limit reached: Sleeping for a minute");
+                                DiscordClientNew.WriteToFile($"{DateTime.Now} - Limit reached: Sleeping for a minute");
                                 count = 0;
                                 Thread.Sleep(60000);
-                                //DiscordClientNew.WriteToFile($"{DateTime.Now} - Continuing");
+                                DiscordClientNew.WriteToFile($"{DateTime.Now} - Continuing");
                             }
                         }
                     }
