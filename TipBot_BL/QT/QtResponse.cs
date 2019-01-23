@@ -54,6 +54,20 @@ namespace TipBot_BL.QT {
             return false;
         }
 
+        public static long? GetBlockHeight() {
+            try
+            {
+                var obj = GroestlJson.TipBotRequest("getblockcount", new List<string>());
+                var response = JsonConvert.DeserializeObject<QtResponse>(obj);
+                return long.Parse(response.Result);
+            }
+            catch (Exception e)
+            {
+                DiscordClientNew.WriteToFile(e.Message);
+                return null;
+            }
+        }
+
         public static decimal MinimumWithdraw => (decimal)0.1;
 
 
